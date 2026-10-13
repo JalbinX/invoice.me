@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JalbinX Invoice Maker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root{--bg:#f3f4f6;--card:#fff;--fg:#14181f;--mut:#667085;--line:#d9dde3;--acc:#1f3a5f;--accfg:#fff;--inp:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1218;--card:#181c24;--fg:#eef0f3;--mut:#98a2b3;--line:#2a303b;--acc:#8fb4e8;--accfg:#0f1218;--inp:#10141b}}
+:root[data-theme="dark"]{--bg:#0f1218;--card:#181c24;--fg:#eef0f3;--mut:#98a2b3;--line:#2a303b;--acc:#8fb4e8;--accfg:#0f1218;--inp:#10141b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.bar h1{font-size:17px;margin:0}
+.btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:8px 12px;border-radius:8px;cursor:pointer}
+button.pri{background:var(--acc);color:var(--accfg);border-color:var(--acc);font-weight:600}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.wrap{display:grid;gap:16px;padding:16px;max-width:1200px;margin:0 auto}
+@media(min-width:960px){.wrap{grid-template-columns:420px 1fr;align-items:start}.prev{position:sticky;top:70px}}
+.form section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+.form h2{font-size:15px;margin:0 0 10px}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
+input,select,textarea{width:100%;font:inherit;color:var(--fg);background:var(--inp);border:1px solid var(--line);border-radius:7px;padding:8px}
+textarea{min-height:60px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row{display:grid;grid-template-columns:1fr 56px 84px 32px;gap:6px;margin-bottom:6px;align-items:center}
+.row button{padding:6px}
+.hint{font-size:12px;color:var(--mut);margin:6px 0 0}
+.prev{overflow-x:auto}
+.paper{background:#fff;color:#14181f;border:1px solid #d9dde3;border-radius:6px;padding:28px;min-width:0;font-size:14px}
+.paper .top{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.paper h3{margin:0;font-size:28px;letter-spacing:.5px;color:#1f3a5f}
+.paper .biz{font-weight:700;font-size:16px}
+.paper .m{color:#5b6472;font-size:13px;white-space:pre-line}
+.paper .due{text-align:right}
+.paper .due b{display:block;font-size:26px;color:#1f3a5f}
+.paper .meta{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0}
+.paper .k{font-size:12px;color:#5b6472;margin-bottom:2px}
+.paper table{width:100%;border-collapse:collapse;margin-top:6px}
+.paper th{text-align:left;font-size:12px;color:#5b6472;font-weight:600;border-bottom:2px solid #1f3a5f;padding:6px 4px}
+.paper td{padding:8px 4px;border-bottom:1px solid #e6e9ee;vertical-align:top}
+.paper .r{text-align:right;white-space:nowrap}
+.tot{margin:12px 0 0 auto;width:min(260px,100%)}
+.tot div{display:flex;justify-content:space-between;padding:3px 4px}
+.tot .g{border-top:2px solid #1f3a5f;margin-top:4px;padding-top:8px;font-weight:700;font-size:16px}
+.pay{margin-top:24px;border:1px solid #c9d3e3;background:#f5f8fc;border-radius:6px;padding:14px}
+.pay h4{margin:0 0 8px;font-size:14px}
+.pay dl{display:grid;grid-template-columns:150px 1fr;gap:4px 10px;margin:0}
+.pay dt{color:#5b6472}.pay dd{margin:0;font-weight:600;word-break:break-all}
+.note{margin-top:16px;white-space:pre-line;color:#3d4552}
+.empty{color:#9a3412}
+@media print{
+ @page{margin:12mm}
+ body{background:#fff}.bar,.form{display:none!important}
+ .wrap{display:block;padding:0}.prev{position:static;overflow:visible}
+ .paper{border:0;padding:0}
+}
+</style>
+</head>
+<body>
+<div class="bar"><h1>Invoice maker</h1>
+ <div class="btns"><button id="new">New invoice</button><button id="print">Save PDF</button><button id="mail" class="pri">Email client</button></div></div>
+<div class="wrap">
+ <div class="form">
+  <section><h2>Your business</h2>
+   <label>Business name</label><input data-k="from.name">
+   <label>Your name</label><input data-k="from.contact">
+   <label>Email</label><input data-k="from.email" type="email">
+   <label>Address</label><input data-k="from.addr">
+  </section>
+  <section><h2>Bill to</h2>
+   <label>Client name</label><input data-k="to.name" placeholder="Client or company">
+   <label>Client email</label><input data-k="to.email" type="email">
+   <label>Client address</label><input data-k="to.addr">
+  </section>
+  <section><h2>Invoice details</h2>
+   <div class="two"><div><label>Invoice number</label><input data-k="inv.num"></div>
+   <div><label>Invoice date</label><input data-k="inv.date" type="date"></div></div>
+   <label>Payment terms</label>
+   <select data-k="inv.terms"><option value="0">Due on receipt</option><option value="7">Net 7 days</option><option value="14">Net 14 days</option><option value="30">Net 30 days</option></select>
+   <label>Tax % (leave 0 if none)</label><input data-k="tax" type="number" min="0" step="0.1">
+  </section>
+  <section><h2>Items</h2>
+   <div id="items"></div>
+   <button id="add">Add item</button>
+   <p class="hint">Description, qty, price in USD.</p>
+  </section>
+  <section><h2>Payment details</h2>
+   <p class="hint" style="margin-top:0">Paste your Payoneer US receiving account details. They save in this browser, so you only enter them once.</p>
+   <label>Account holder name</label><input data-k="pay.holder">
+   <label>Bank name</label><input data-k="pay.bank">
+   <div class="two"><div><label>Account number</label><input data-k="pay.acct" inputmode="numeric"></div>
+   <div><label>Routing number (ABA)</label><input data-k="pay.routing" inputmode="numeric"></div></div>
+   <div class="two"><div><label>Account type</label><select data-k="pay.type"><option>Checking</option><option>Savings</option></select></div>
+   <div><label>SWIFT (international wires)</label><input data-k="pay.swift"></div></div>
+   <label>Bank address (optional)</label><input data-k="pay.baddr">
+  </section>
+  <section><h2>Notes</h2><textarea data-k="notes"></textarea></section>
+ </div>
+ <div class="prev"><div class="paper" id="paper"></div></div>
+</div>
+<script>
+const KEY='jalbinx_invoice_v1';
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const def=()=>({from:{name:'JalbinX',contact:'John Chibuike',email:'Johnchibuike0000@gmail.com',addr:'Accra, Ghana'},
+ to:{name:'',email:'',addr:''},inv:{num:'INV-0001',date:today(),terms:'14'},items:[{d:'',q:1,r:0}],tax:0,
+ notes:'Thank you for your business. Please use the invoice number as your payment reference.',
+ pay:{holder:'',bank:'',acct:'',routing:'',type:'Checking',swift:'',baddr:''}});
+let S=def();
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s){const d=def();for(const k in d){S[k]=(typeof d[k]==='object'&&!Array.isArray(d[k]))?Object.assign(d[k],s[k]||{}):(s[k]!==undefined?s[k]:d[k])}}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n||0);
+const fd=s=>{if(!s)return'';const d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})};
+const getP=k=>{const[a,b]=k.split('.');return b?S[a][b]:S[a]};
+const setP=(k,v)=>{const[a,b]=k.split('.');if(b)S[a][b]=v;else S[a]=v};
+function dueDate(){const n=parseInt(S.inv.terms)||0;if(!n)return'Due on receipt';const d=new Date(S.inv.date+'T00:00:00');d.setDate(d.getDate()+n);return fd(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))}
+function totals(){const sub=S.items.reduce((a,i)=>a+(+i.q||0)*(+i.r||0),0);const tax=sub*(+S.tax||0)/100;return{sub,tax,total:sub+tax}}
+function render(){
+ const t=totals(),p=S.pay,f=S.from,c=S.to;
+ const rows=S.items.filter(i=>i.d||+i.r).map(i=>`<tr><td>${esc(i.d)}</td><td class="r">${+i.q||0}</td><td class="r">${money(+i.r)}</td><td class="r">${money((+i.q||0)*(+i.r||0))}</td></tr>`).join('')||'<tr><td colspan="4" class="m">Add items to see them here.</td></tr>';
+ const pr=[['Account holder',p.holder],['Bank',p.bank],['Bank address',p.baddr],['Account number',p.acct],['Routing number (ABA)',p.routing],['Account type',p.type],['SWIFT',p.swift],['Payment reference',S.inv.num]].filter(x=>x[1]);
+ const hasBank=p.holder||p.acct||p.routing;
+ document.getElementById('paper').innerHTML=`
+ <div class="top"><div><h3>INVOICE</h3><div class="m">${esc(S.inv.num)}</div></div>
+ <div class="due"><span class="m">Amount due (USD)</span><b>${money(t.total)}</b><span class="m">${S.inv.terms==='0'?'Due on receipt':'Due by '+dueDate()}</span></div></div>
+ <div class="meta"><div><div class="k">From</div><div class="biz">${esc(f.name)}</div><div class="m">${esc([f.contact,f.email,f.addr].filter(Boolean).join('\n'))}</div></div>
+ <div><div class="k">Bill to</div><div class="biz">${esc(c.name)||'<span class="m">Client name</span>'}</div><div class="m">${esc([c.email,c.addr].filter(Boolean).join('\n'))}</div>
+ <div class="k" style="margin-top:10px">Invoice date</div><div>${fd(S.inv.date)}</div></div></div>
+ <table><thead><tr><th>Description</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th></tr></thead><tbody>${rows}</tbody></table>
+ <div class="tot"><div><span>Subtotal</span><span>${money(t.sub)}</span></div>${+S.tax?`<div><span>Tax (${+S.tax}%)</span><span>${money(t.tax)}</span></div>`:''}<div class="g"><span>Total due</span><span>${money(t.total)}</span></div></div>
+ <div class="pay"><h4>How to pay by bank transfer (USD)</h4>${hasBank?`<dl>${pr.map(x=>`<dt>${x[0]}</dt><dd>${esc(x[1])}</dd>`).join('')}</dl>`:'<div class="empty">Add your payment details so your client knows where to send the money.</div>'}</div>
+ ${S.notes?`<div class="note">${esc(S.notes)}</div>`:''}`;
+}
+function items(){
+ const box=document.getElementById('items');
+ box.innerHTML=S.items.map((it,i)=>`<div class="row"><input data-i="${i}" data-f="d" placeholder="Description" value="${esc(it.d)}"><input data-i="${i}" data-f="q" type="number" min="0" step="any" value="${it.q}"><input data-i="${i}" data-f="r" type="number" min="0" step="any" value="${it.r}"><button data-del="${i}" aria-label="Remove item">x</button></div>`).join('');
+}
+document.getElementById('items').addEventListener('input',e=>{const i=e.target.dataset.i;if(i===undefined)return;const f=e.target.dataset.f;S.items[i][f]=f==='d'?e.target.value:(parseFloat(e.target.value)||0);save();render()});
+document.getElementById('items').addEventListener('click',e=>{const d=e.target.dataset.del;if(d===undefined)return;S.items.splice(d,1);if(!S.items.length)S.items.push({d:'',q:1,r:0});save();items();render()});
+document.getElementById('add').onclick=()=>{S.items.push({d:'',q:1,r:0});save();items()};
+document.querySelectorAll('[data-k]').forEach(el=>{el.value=getP(el.dataset.k);el.addEventListener('input',()=>{setP(el.dataset.k,el.type==='number'?(parseFloat(el.value)||0):el.value);save();render()})});
+function pdfJob(){
+ const el=document.getElementById('paper').cloneNode(true);el.removeAttribute('id');
+ el.style.cssText='position:fixed;left:-10000px;top:0;width:780px;border:0;border-radius:0';
+ document.body.appendChild(el);
+ const w=html2pdf().set({margin:10,filename:S.inv.num+'.pdf',image:{type:'jpeg',quality:.95},html2canvas:{scale:2,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4'}}).from(el);
+ return {w,done:()=>el.remove()};
+}
+async function makePdf(){const j=pdfJob();try{const d=await j.w.outputPdf('datauristring');return d.split('base64,')[1]}finally{j.done()}}
+document.getElementById('print').onclick=async()=>{const j=pdfJob();try{await j.w.save()}catch(e){alert('Could not make the PDF: '+e.message)}finally{j.done()}};
+document.getElementById('new').onclick=()=>{
+ const m=S.inv.num.match(/^(.*?)(\d+)$/);
+ S.inv.num=m?m[1]+String(+m[2]+1).padStart(m[2].length,'0'):S.inv.num+'-2';
+ S.inv.date=today();S.to={name:'',email:'',addr:''};S.items=[{d:'',q:1,r:0}];S.tax=0;
+ save();document.querySelectorAll('[data-k]').forEach(el=>el.value=getP(el.dataset.k));items();render();window.scrollTo(0,0)};
+const mailBtn=document.getElementById('mail');
+mailBtn.onclick=async()=>{
+ const t=totals(),p=S.pay,f=S.from,c=S.to;
+ if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email||'')){alert('Add the client email first.');return}
+ if(!t.total){alert('Add at least one item with a price.');return}
+ let pass='';try{pass=localStorage.getItem('jalbinx_pass')||''}catch(e){}
+ if(!pass){pass=prompt('Enter your send passcode')||'';if(!pass)return}
+ const label=mailBtn.textContent;mailBtn.disabled=true;mailBtn.textContent='Sending...';
+ try{
+  const pdf=await makePdf();
+  const due=S.inv.terms==='0'?'due on receipt':'due by '+dueDate();
+  const bank=[['Account holder',p.holder],['Bank',p.bank],['Bank address',p.baddr],['Account number',p.acct],['Routing number (ABA)',p.routing],['Account type',p.type],['SWIFT',p.swift]].filter(x=>x[1]).map(x=>x[0]+': '+x[1]).join('\n');
+  const text='Hi '+(c.name||'there')+',\n\nPlease find invoice '+S.inv.num+' attached. The total is '+money(t.total)+' ('+due+').\n\n'+(bank?'To pay by bank transfer (USD):\n'+bank+'\nPayment reference: '+S.inv.num+'\n\n':'')+'Let me know once payment is sent.\n\nThanks,\n'+(f.contact||'')+'\n'+(f.name||'');
+  const r=await fetch('/api/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({passcode:pass,to:c.email,subject:'Invoice '+S.inv.num+' from '+f.name,text,filename:S.inv.num+'.pdf',pdf})});
+  const j=await r.json().catch(()=>({}));
+  if(r.status===401){try{localStorage.removeItem('jalbinx_pass')}catch(e){}throw new Error('Wrong passcode')}
+  if(!r.ok)throw new Error(j.error||'Send failed');
+  try{localStorage.setItem('jalbinx_pass',pass)}catch(e){}
+  alert('Invoice sent to '+c.email);
+ }catch(e){alert('Could not send: '+e.message)}
+ mailBtn.disabled=false;mailBtn.textContent=label;
+};
+items();render();
+</script>
+</body>
+</html>
